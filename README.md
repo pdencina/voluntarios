@@ -42,7 +42,8 @@ npx eslint .                 # estilo
 npx prisma migrate dev       # nueva migración (requiere conexión directa a Postgres)
 ```
 
-Las migraciones se aplican solas al desplegar (`npm run build` ejecuta `prisma migrate deploy`).
+Cada push a `main` se publica automáticamente en Vercel. Las migraciones se aplican solas al
+desplegar (`npm run build` ejecuta `prisma migrate deploy`).
 
 ## Datos
 
