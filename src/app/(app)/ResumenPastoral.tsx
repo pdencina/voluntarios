@@ -97,6 +97,25 @@ export default async function ResumenPastoral({ equipos }: { equipos: Equipo[] }
 
   const porEstado = Object.fromEntries(postulaciones.map((p) => [p.estado, p._count._all]));
 
+  // Asistencia real: puestos asignados vs llegadas registradas, por semana y encuentro.
+  const idsSemanas = semanas.map((s) => s.id);
+  const [asigG, llegG] = await Promise.all([
+    prisma.asignacionPuesto.groupBy({ by: ["semanaId", "encuentro"], where: { semanaId: { in: idsSemanas } }, _count: { _all: true } }),
+    prisma.asistencia.groupBy({ by: ["semanaId", "encuentro"], where: { semanaId: { in: idsSemanas } }, _count: { _all: true } }),
+  ]);
+  const cuenta = (g: typeof asigG, semanaId: string, encuentro: string) =>
+    g.find((x) => x.semanaId === semanaId && x.encuentro === encuentro)?._count._all ?? 0;
+  const asistenciaReal = semanas
+    .map((s) => ({
+      id: s.id,
+      fechaLunes: s.fechaLunes,
+      celdas: FRANJAS.map((_, i) => {
+        const enc = ["JUEVES", "DOMINGO_AM", "DOMINGO_PM"][i];
+        return { asignados: cuenta(asigG, s.id, enc), llegaron: cuenta(llegG, s.id, enc) };
+      }),
+    }))
+    .filter((s) => s.celdas.some((c) => c.llegaron > 0));
+
   return (
     <section className="space-y-6">
       <div>
@@ -196,6 +215,55 @@ export default async function ResumenPastoral({ equipos }: { equipos: Equipo[] }
                   ))}
                   <td />
                 </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Asistencia real */}
+      <div className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
+        <div className="mb-3">
+          <h3 className="font-semibold text-slate-900">Asistencia real por encuentro</h3>
+          <p className="text-xs text-slate-500">Voluntarios que llegaron (registro de llegada) de los que tenían puesto asignado.</p>
+        </div>
+        {asistenciaReal.length === 0 ? (
+          <p className="text-sm text-slate-400">
+            Aún no hay llegadas registradas. Usa el QR de “Llegada de voluntarios” el día del encuentro.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-slate-200 text-xs uppercase text-slate-500">
+                <tr>
+                  <th className="py-2 pr-4">Semana del</th>
+                  {FRANJAS.map((f) => (
+                    <th key={f.key} className="py-2 pr-4">
+                      {f.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {asistenciaReal.map((s) => (
+                  <tr key={s.id} className="border-b border-slate-100 last:border-0">
+                    <td className="py-2 pr-4 font-medium text-slate-900">{fmtSemana.format(s.fechaLunes)}</td>
+                    {s.celdas.map((c, i) => (
+                      <td key={i} className="py-2 pr-4 tabular-nums text-slate-800">
+                        {c.asignados || c.llegaron ? (
+                          <>
+                            {c.llegaron}/{c.asignados}{" "}
+                            {c.asignados > 0 && (
+                              <span className="text-xs text-slate-500">({Math.round((c.llegaron / c.asignados) * 100)}%)</span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-slate-300">—</span>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

@@ -1,6 +1,5 @@
 "use server";
 
-import { randomBytes } from "node:crypto";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
@@ -14,6 +13,7 @@ import {
 } from "@/lib/auth";
 import { registrarAuditoria } from "@/lib/audit";
 import { lunesDeSemana, proximoLunes } from "@/lib/logica";
+import { abrirSemana, sincronizarRespuestas } from "@/lib/convocatoria";
 import { puedeConvocar, type RolUsuario } from "@/lib/constants";
 import { LIMITES_LOGIN, ipDeCabeceras, motivoBloqueo } from "@/lib/limites";
 
@@ -81,25 +81,6 @@ export async function logoutAction() {
 
 // ---------- Convocatorias ----------
 
-async function sincronizarRespuestas(semanaId: string) {
-  const [voluntarios, existentes] = await Promise.all([
-    prisma.voluntario.findMany({ where: { activo: true }, select: { id: true } }),
-    prisma.respuesta.findMany({ where: { semanaId }, select: { voluntarioId: true } }),
-  ]);
-  const yaTienen = new Set(existentes.map((e) => e.voluntarioId));
-  const nuevos = voluntarios.filter((v) => !yaTienen.has(v.id));
-  if (nuevos.length) {
-    await prisma.respuesta.createMany({
-      data: nuevos.map((v) => ({
-        semanaId,
-        voluntarioId: v.id,
-        token: randomBytes(24).toString("hex"),
-      })),
-    });
-  }
-  return nuevos.length;
-}
-
 export async function crearConvocatoriaAction(formData?: FormData) {
   const user = await getCurrentUser();
   if (!user || !puedeConvocar(user.rol)) {
@@ -111,12 +92,7 @@ export async function crearConvocatoriaAction(formData?: FormData) {
     (typeof fechaInput === "string" && fechaInput ? lunesDeSemana(fechaInput) : null) ??
     proximoLunes();
 
-  const semana = await prisma.semanaServicio.upsert({
-    where: { fechaLunes },
-    update: {},
-    create: { fechaLunes, creadaPorId: user.id },
-  });
-  await sincronizarRespuestas(semana.id);
+  const { semana } = await abrirSemana(fechaLunes, user.id);
   await registrarAuditoria(user, "convocatoria.abrir", `Semana ${fechaLunes.toISOString().slice(0, 10)}`);
 
   revalidatePath("/convocatorias");

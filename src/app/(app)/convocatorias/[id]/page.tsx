@@ -1,4 +1,5 @@
 import Link from "next/link";
+import FormAccion from "@/components/FormAccion";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { getCurrentUser } from "@/lib/auth";
@@ -81,6 +82,17 @@ export default async function ConvocatoriaDetallePage({
   const totalDisponibles = FRANJAS.map((fr) => todos.filter((f) => f.respuesta?.[fr.key] === true).length);
 
   const q = (extra: string) => `/convocatorias/${semana.id}${extra}`;
+  const enlacesDe = (v: { nombre: string; telefono: string | null; respondio: boolean; respuesta: { token: string } | null }) => {
+    const link = v.respuesta ? `${origin}/confirmar/${v.respuesta.token}` : null;
+    const recordatorio =
+      !v.respondio && link
+        ? enlaceWhatsApp(
+            v.telefono,
+            `Hola ${v.nombre.split(" ")[0]}, ¿puedes confirmar tu disponibilidad para la semana de servicio del ${formatFecha(semana.fechaLunes)}? Solo toma un minuto: ${link}`
+          )
+        : null;
+    return { link, recordatorio };
+  };
 
   return (
     <div className="space-y-6">
@@ -97,18 +109,18 @@ export default async function ConvocatoriaDetallePage({
           </h1>
           {puedeConvocar(user.rol) && (
             <div className="flex gap-2">
-              <form action={sincronizarConvocatoriaAction}>
+              <FormAccion action={sincronizarConvocatoriaAction} exito="Voluntarios nuevos incluidos.">
                 <input type="hidden" name="semanaId" value={semana.id} />
                 <button className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100">
                   Incluir voluntarios nuevos
                 </button>
-              </form>
-              <form action={alternarConvocatoriaAction}>
+              </FormAccion>
+              <FormAccion action={alternarConvocatoriaAction} exito="Convocatoria actualizada.">
                 <input type="hidden" name="semanaId" value={semana.id} />
                 <button className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100">
                   {semana.abierta ? "Cerrar convocatoria" : "Reabrir"}
                 </button>
-              </form>
+              </FormAccion>
             </div>
           )}
         </div>
@@ -201,7 +213,56 @@ export default async function ConvocatoriaDetallePage({
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            <ul className="space-y-2 md:hidden">
+              {visibles.map((v) => {
+                const { link, recordatorio } = enlacesDe(v);
+                return (
+                  <li key={v.id} className="rounded-lg border border-slate-200 p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium text-slate-900">{v.nombre}</span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          v.respondio ? "bg-sage-500/10 text-sage-700" : "bg-amber-100 text-amber-800"
+                        }`}
+                      >
+                        {v.respondio ? "Respondió" : "Pendiente"}
+                      </span>
+                    </div>
+                    <div className="mt-2 flex gap-1.5 text-xs">
+                      {FRANJAS.map((f) => {
+                        const val = v.respuesta ? v.respuesta[f.key] : null;
+                        return (
+                          <span
+                            key={f.key}
+                            className={`rounded-full px-2 py-0.5 ${
+                              val === true
+                                ? "bg-sage-600 text-white"
+                                : val === false
+                                  ? "bg-slate-200 text-slate-500 line-through"
+                                  : "border border-dashed border-slate-300 text-slate-400"
+                            }`}
+                          >
+                            {f.label}
+                          </span>
+                        );
+                      })}
+                    </div>
+                    {(recordatorio || link) && (
+                      <div className="mt-2 flex items-center gap-3">
+                        {recordatorio && (
+                          <a href={recordatorio} target="_blank" rel="noreferrer" className="text-xs font-medium text-sage-700">
+                            Recordar por WhatsApp
+                          </a>
+                        )}
+                        {link && <CopyLinkButton url={link} />}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-left text-sm">
                 <thead className="border-b border-slate-200 text-xs uppercase text-slate-500">
                   <tr>
@@ -217,14 +278,7 @@ export default async function ConvocatoriaDetallePage({
                 </thead>
                 <tbody>
                   {visibles.map((v) => {
-                    const link = v.respuesta ? `${origin}/confirmar/${v.respuesta.token}` : null;
-                    const recordatorio =
-                      !v.respondio && link
-                        ? enlaceWhatsApp(
-                            v.telefono,
-                            `Hola ${v.nombre.split(" ")[0]}, ¿puedes confirmar tu disponibilidad para la semana de servicio del ${formatFecha(semana.fechaLunes)}? Solo toma un minuto: ${link}`
-                          )
-                        : null;
+                    const { link, recordatorio } = enlacesDe(v);
                     return (
                       <tr key={v.id} className="border-b border-slate-100 last:border-0">
                         <td className="py-2 pr-4 font-medium text-slate-900">{v.nombre}</td>

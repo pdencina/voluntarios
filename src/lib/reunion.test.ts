@@ -20,3 +20,13 @@ describe("firma del link de reunión", () => {
     expect(enlaceReunion("https://x.app", "s", "e")).toBe(`https://x.app/reunion/s/e?f=${firmaReunion("s", "e")}`);
   });
 });
+
+describe("firma del QR de llegada", () => {
+  it("no sirve para otro encuentro ni se confunde con la de reunión", async () => {
+    const { firmaLlegada, firmaLlegadaValida, firmaReunion } = await import("./reunion");
+    const f = firmaLlegada("semana1", "JUEVES");
+    expect(firmaLlegadaValida("semana1", "JUEVES", f)).toBe(true);
+    expect(firmaLlegadaValida("semana1", "DOMINGO_AM", f)).toBe(false);
+    expect(f).not.toBe(firmaReunion("semana1", "JUEVES"));
+  });
+});

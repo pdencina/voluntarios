@@ -1,4 +1,5 @@
 import Link from "next/link";
+import FormAccion from "@/components/FormAccion";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -140,12 +141,12 @@ export default async function PostulacionDetallePage({
                   Agrega el teléfono del líder en la ficha del equipo para avisarle con un clic.
                 </span>
               )}
-              <form action={avisarLiderAction}>
+              <FormAccion action={avisarLiderAction} exito="Líder marcado como avisado.">
                 <input type="hidden" name="id" value={p.id} />
                 <button className="rounded border border-slate-300 bg-white px-3 py-1.5 text-slate-700 hover:bg-slate-100">
                   Marcar líder como avisado
                 </button>
-              </form>
+              </FormAccion>
             </div>
           )}
           {p.voluntarioId && (

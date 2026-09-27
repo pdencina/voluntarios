@@ -28,6 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         { href: "/convocatorias", label: "Convocatorias", icono: "convocatorias" },
         { href: "/convocatorias/en-vivo", label: "Convocatoria en vivo", icono: "envivo" },
         { href: "/distribucion", label: "Distribución", icono: "distribucion" },
+        { href: "/asistencia", label: "Llegada de voluntarios", icono: "asistencia" },
         ...(puedePostular(user.rol)
           ? [{ href: "/ingreso-voluntariado", label: "Ingreso Voluntariado", icono: "ingreso" as const }]
           : []),

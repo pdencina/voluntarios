@@ -43,6 +43,7 @@ model Voluntario {
   respuestas    Respuesta[]
   postulaciones Postulacion[]
   asignaciones  AsignacionPuesto[]
+  asistencias   Asistencia[]
 
   @@index([nombreNormalizado])
 }
@@ -97,6 +98,7 @@ model SemanaServicio {
   respuestas   Respuesta[]
   asignaciones AsignacionPuesto[]
   encargados   EncargadoArea[]
+  asistencias  Asistencia[]
 }
 
 model Respuesta {
@@ -248,4 +250,20 @@ model EncargadoArea {
   area   AreaServicio   @relation(fields: [areaId], references: [id], onDelete: Cascade)
 
   @@unique([semanaId, encuentro, areaId])
+}
+
+/// Llegada real de un voluntario a un encuentro (registro de llegada / check-in).
+model Asistencia {
+  id              String   @id @default(cuid())
+  semanaId        String
+  encuentro       String
+  voluntarioId    String
+  llegadaAt       DateTime @default(now())
+  registradaPorId String? // null = la marcó el propio voluntario
+
+  semana     SemanaServicio @relation(fields: [semanaId], references: [id], onDelete: Cascade)
+  voluntario Voluntario     @relation(fields: [voluntarioId], references: [id], onDelete: Cascade)
+
+  @@unique([semanaId, encuentro, voluntarioId])
+  @@index([voluntarioId])
 }

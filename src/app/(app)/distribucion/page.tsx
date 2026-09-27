@@ -1,6 +1,7 @@
 import Link from "next/link";
+import FormAccion from "@/components/FormAccion";
 import BotonConfirmar from "@/components/BotonConfirmar";
-import { Download, Printer, Settings2, Sparkles, Trash2 } from "lucide-react";
+import { Download, MapPinCheck, MessageCircle, Printer, Settings2, Sparkles, Trash2 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { esAdmin } from "@/lib/constants";
@@ -51,6 +52,11 @@ export default async function DistribucionPage({
   const delEncuentro = datos.asignaciones.filter((a) => a.encuentro === encuentro);
   const porSlot = new Map(delEncuentro.map((a) => [`${a.puestoId}:${a.slot}`, a]));
   const disponibles = datos.disponibles(encuentro);
+  const llegaron = new Set(
+    (await prisma.asistencia.findMany({ where: { semanaId: semanaSel.id, encuentro }, select: { voluntarioId: true } })).map(
+      (a) => a.voluntarioId
+    )
+  );
 
   const areas: AreaVM[] = datos.areas
     .map((a, i) => {
@@ -82,6 +88,7 @@ export default async function DistribucionPage({
                   voluntarioId: asg?.voluntarioId ?? null,
                   nombre: v?.nombre ?? null,
                   fija: asg?.fija ?? false,
+                  llego: !!asg && llegaron.has(asg.voluntarioId),
                   motivos: v ? motivosDe(v, alg, otros) : [],
                 };
               }),
@@ -199,21 +206,21 @@ export default async function DistribucionPage({
       <div className="flex flex-wrap items-center gap-2">
         {armarTodo && (
           <>
-            <form action={generarDistribucionAction}>
+            <FormAccion action={generarDistribucionAction} exito="Propuesta generada.">
               <input type="hidden" name="semanaId" value={semanaSel.id} />
               <input type="hidden" name="encuentro" value={encuentro} />
               <button className="flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
                 <Sparkles className="h-4 w-4 text-accent-300" /> Generar propuesta de este encuentro
               </button>
-            </form>
-            <form action={generarDistribucionAction}>
+            </FormAccion>
+            <FormAccion action={generarDistribucionAction} exito="Propuesta generada.">
               <input type="hidden" name="semanaId" value={semanaSel.id} />
               <input type="hidden" name="encuentro" value="TODOS" />
               <button className="rounded-lg border border-brand-600 px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50">
                 Generar los 3 encuentros
               </button>
-            </form>
-            <form action={limpiarDistribucionAction}>
+            </FormAccion>
+            <FormAccion action={limpiarDistribucionAction} exito="Propuesta automática limpiada.">
               <input type="hidden" name="semanaId" value={semanaSel.id} />
               <input type="hidden" name="encuentro" value={encuentro} />
               <BotonConfirmar
@@ -225,9 +232,21 @@ export default async function DistribucionPage({
               >
                 <Trash2 className="h-4 w-4" /> Limpiar automáticas
               </BotonConfirmar>
-            </form>
+            </FormAccion>
           </>
         )}
+        <Link
+          href={`/distribucion/avisar?semana=${semanaSel.id}`}
+          className="flex items-center gap-1.5 rounded-lg border border-sage-600 bg-white px-3 py-2 text-sm font-medium text-sage-700 hover:bg-sage-500/10"
+        >
+          <MessageCircle className="h-4 w-4" /> Avisar puestos por WhatsApp
+        </Link>
+        <Link
+          href={`/asistencia?semana=${semanaSel.id}&e=${encuentro}`}
+          className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+        >
+          <MapPinCheck className="h-4 w-4" /> Llegadas
+        </Link>
         <Link
           href={`/distribucion/imprimir?semana=${semanaSel.id}&e=${encuentro}`}
           className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"

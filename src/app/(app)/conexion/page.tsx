@@ -1,4 +1,5 @@
 import Link from "next/link";
+import FormAccion from "@/components/FormAccion";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -148,13 +149,13 @@ export default async function ConexionPage({
                         </a>
                       )}
                       {sig && (
-                        <form action={avanzarPersonaAction} className="inline">
+                        <FormAccion action={avanzarPersonaAction} exito="Seguimiento actualizado." className="inline">
                           <input type="hidden" name="id" value={p.id} />
                           <input type="hidden" name="estado" value={sig.estado} />
                           <button className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100">
                             {sig.etiqueta}
                           </button>
-                        </form>
+                        </FormAccion>
                       )}
                     </td>
                   </tr>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import FormAccion from "@/components/FormAccion";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { TIEMPO_IGLESIA, esAdmin } from "@/lib/constants";
@@ -80,12 +81,12 @@ export default async function BienvenidasPage() {
                       Escribir por WhatsApp
                     </a>
                   )}
-                  <form action={marcarBienvenidaAction}>
+                  <FormAccion action={marcarBienvenidaAction} exito="¡Bienvenida registrada!">
                     <input type="hidden" name="id" value={p.id} />
                     <button className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100">
                       Ya di la bienvenida
                     </button>
-                  </form>
+                  </FormAccion>
                 </div>
               </div>
               {esAdmin(user.rol) && (

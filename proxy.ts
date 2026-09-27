@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 
 const COOKIE_NAME = "cpa_session";
-const PUBLIC_PATHS = ["/login", "/confirmar", "/reunion"];
+const PUBLIC_PATHS = ["/login", "/confirmar", "/reunion", "/llegada"];
 
 function esPublica(pathname: string) {
   if (pathname === "/") return false;
@@ -43,5 +43,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  // Íconos, manifiesto, vista previa y robots deben ser públicos (los piden navegadores y WhatsApp sin sesión).
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|icon|apple-icon|manifest.webmanifest|opengraph-image|robots.txt).*)"],
 };

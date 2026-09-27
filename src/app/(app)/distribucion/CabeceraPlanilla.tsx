@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Pencil } from "lucide-react";
 import { guardarCabeceraAction } from "@/lib/distribucion-actions";
+import { toast } from "@/components/toast";
 
 type Props = {
   semanaId: string;
@@ -50,6 +51,7 @@ export default function CabeceraPlanilla(p: Props) {
         <form
           action={async (fd) => {
             await guardarCabeceraAction(fd);
+            toast("Cabecera guardada.");
             setEditando(false);
           }}
           className="grid grid-cols-1 gap-3 p-5 sm:grid-cols-3"

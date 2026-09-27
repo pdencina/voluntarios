@@ -8,6 +8,7 @@ import {
   DatabaseBackup,
   GitMerge,
   LayoutGrid,
+  MapPinCheck,
   Handshake,
   HeartHandshake,
   Layers,
@@ -16,6 +17,7 @@ import {
   LogOut,
   Menu,
   ScrollText,
+  Search,
   UserCog,
   UserPlus,
   Users,
@@ -23,6 +25,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { logoutAction } from "@/lib/actions";
+import BuscadorGlobal, { EVENTO_ABRIR_BUSCADOR } from "@/components/BuscadorGlobal";
 
 const ICONOS: Record<string, LucideIcon> = {
   panel: LayoutDashboard,
@@ -31,6 +34,7 @@ const ICONOS: Record<string, LucideIcon> = {
   convocatorias: CalendarCheck,
   envivo: Radio,
   distribucion: LayoutGrid,
+  asistencia: MapPinCheck,
   ingreso: UserPlus,
   bienvenida: HeartHandshake,
   conexion: Handshake,
@@ -69,6 +73,21 @@ function Contenido({ grupos, nombre, rol, pendientes, alNavegar }: Props & { alN
           <p className="text-base font-bold text-white">Voluntarios CPA</p>
           <p className="text-xs text-brand-300">Administración de equipos</p>
         </div>
+      </div>
+
+      <div className="px-3 pb-4">
+        <button
+          type="button"
+          onClick={() => {
+            alNavegar?.();
+            window.dispatchEvent(new Event(EVENTO_ABRIR_BUSCADOR));
+          }}
+          className="flex w-full items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-sm text-brand-200 hover:bg-white/15 hover:text-white"
+        >
+          <Search className="h-4 w-4" />
+          <span className="flex-1 text-left">Buscar…</span>
+          <kbd className="hidden rounded border border-white/20 px-1.5 text-[10px] text-brand-300 lg:inline">Ctrl K</kbd>
+        </button>
       </div>
 
       <nav className="flex-1 space-y-5 overflow-y-auto px-3 pb-4">
@@ -141,6 +160,7 @@ export default function AppSidebar(props: Props) {
 
   return (
     <>
+      <BuscadorGlobal paginas={props.grupos.flatMap((g) => g.items.map((i) => ({ href: i.href, label: i.label })))} />
       {/* Escritorio */}
       <aside className={`sticky top-0 hidden h-screen w-64 shrink-0 lg:block print:hidden ${FONDO}`}>
         <Contenido {...props} />
@@ -152,6 +172,14 @@ export default function AppSidebar(props: Props) {
           <HeartHandshake className="h-5 w-5 text-accent-300" />
           Voluntarios CPA
         </div>
+        <button
+          type="button"
+          aria-label="Buscar"
+          onClick={() => window.dispatchEvent(new Event(EVENTO_ABRIR_BUSCADOR))}
+          className="ml-auto mr-1 rounded-lg p-2 hover:bg-white/10"
+        >
+          <Search className="h-5 w-5" />
+        </button>
         <button
           type="button"
           aria-label="Abrir menú"

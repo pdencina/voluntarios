@@ -1,4 +1,5 @@
 import Link from "next/link";
+import FormAccion from "@/components/FormAccion";
 import BotonConfirmar from "@/components/BotonConfirmar";
 import { redirect } from "next/navigation";
 import { eliminarUsuarioAction } from "@/lib/gestion";
@@ -77,7 +78,7 @@ export default async function UsuariosPage() {
                     Editar
                   </Link>
                   {u.id !== user.id && (
-                    <form action={eliminarUsuarioAction} className="inline">
+                    <FormAccion action={eliminarUsuarioAction} exito="Usuario eliminado." className="inline">
                       <input type="hidden" name="id" value={u.id} />
                       <BotonConfirmar
                         className="text-xs font-medium text-red-600 hover:underline"
@@ -86,7 +87,7 @@ export default async function UsuariosPage() {
                       >
                         Eliminar
                       </BotonConfirmar>
-                    </form>
+                    </FormAccion>
                   )}
                 </td>
               </tr>

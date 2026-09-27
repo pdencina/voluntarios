@@ -1,9 +1,12 @@
 import Link from "next/link";
+import FormAccion from "@/components/FormAccion";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { alternarActivoVoluntarioAction } from "@/lib/gestion";
 import { puedeEditar, veTodo } from "@/lib/constants";
+import { Suspense } from "react";
+import Historial from "./Historial";
 
 function formatFecha(d: Date | null) {
   if (!d) return null;
@@ -36,7 +39,7 @@ export default async function VoluntarioDetallePage({
   if (!puedeVer) notFound();
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-3xl space-y-6">
       <div>
         <Link href="/voluntarios" className="text-sm text-slate-500 hover:underline">
           ← Voluntarios
@@ -51,12 +54,12 @@ export default async function VoluntarioDetallePage({
             >
               Editar
             </Link>
-            <form action={alternarActivoVoluntarioAction}>
+            <FormAccion action={alternarActivoVoluntarioAction} exito="Estado del voluntario actualizado.">
               <input type="hidden" name="id" value={voluntario.id} />
               <button className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100">
                 {voluntario.activo ? "Desactivar" : "Reactivar"}
               </button>
-            </form>
+            </FormAccion>
           </div>
           )}
         </div>
@@ -120,6 +123,10 @@ export default async function VoluntarioDetallePage({
           ))}
         </ul>
       </div>
+
+      <Suspense fallback={<div className="h-48 animate-pulse rounded-xl bg-slate-200/70" />}>
+        <Historial voluntarioId={voluntario.id} />
+      </Suspense>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import FormAccion from "@/components/FormAccion";
 import BotonConfirmar from "@/components/BotonConfirmar";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
@@ -68,7 +69,7 @@ export default async function PersonaNuevaPage({
                 {h.fecha && <span className="text-slate-400"> · {formatoFecha(h.fecha)}</span>}
               </span>
               {!h.fecha && (
-                <form action={avanzarPersonaAction} className="flex items-center gap-2">
+                <FormAccion action={avanzarPersonaAction} exito="Seguimiento actualizado." className="flex items-center gap-2">
                   <input type="hidden" name="id" value={p.id} />
                   <input type="hidden" name="estado" value={h.estado} />
                   <input
@@ -80,7 +81,7 @@ export default async function PersonaNuevaPage({
                   <button className="rounded border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100">
                     Marcar
                   </button>
-                </form>
+                </FormAccion>
               )}
             </li>
           ))}

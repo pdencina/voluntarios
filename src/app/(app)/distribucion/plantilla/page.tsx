@@ -1,4 +1,5 @@
 import Link from "next/link";
+import FormAccion from "@/components/FormAccion";
 import BotonConfirmar from "@/components/BotonConfirmar";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
@@ -57,11 +58,11 @@ export default async function PlantillaPage() {
             {sinGenero} de {total} voluntarios no tienen género registrado. Se necesita para puestos como “Baños mujeres/hombres”.
           </p>
         </div>
-        <form action={sugerirGeneroAction}>
+        <FormAccion action={sugerirGeneroAction} exito="Géneros sugeridos. Revisa los dudosos en cada ficha.">
           <button className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">
             Sugerir género por nombre
           </button>
-        </form>
+        </FormAccion>
       </div>
       <p className="-mt-3 text-xs text-slate-500">
         La sugerencia usa el primer nombre y solo completa a quienes no tienen género. Corrige los casos dudosos en la ficha de cada voluntario.
@@ -69,7 +70,7 @@ export default async function PlantillaPage() {
 
       {areas.map((a) => (
         <div key={a.id} className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
-          <form action={guardarAreaAction} className="flex flex-wrap items-end gap-3">
+          <FormAccion action={guardarAreaAction} exito="Área guardada." className="flex flex-wrap items-end gap-3">
             <input type="hidden" name="id" value={a.id} />
             <label className="text-xs text-slate-500">
               Área
@@ -89,7 +90,7 @@ export default async function PlantillaPage() {
               <input type="checkbox" name="general" defaultChecked={a.general} /> Servicio general (equipos rotativos)
             </label>
             <button className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50">Guardar área</button>
-          </form>
+          </FormAccion>
           <form action={eliminarAreaAction} className="mt-2">
             <input type="hidden" name="id" value={a.id} />
             <BotonConfirmar
@@ -106,7 +107,7 @@ export default async function PlantillaPage() {
               const enc = p.encuentros.split(",");
               return (
                 <div key={p.id} className="flex flex-wrap items-end gap-2 rounded-lg bg-slate-50 p-2">
-                  <form action={guardarPuestoAction} className="flex flex-wrap items-end gap-2">
+                  <FormAccion action={guardarPuestoAction} exito="Puesto guardado." className="flex flex-wrap items-end gap-2">
                     <input type="hidden" name="id" value={p.id} />
                     <input type="hidden" name="areaId" value={a.id} />
                     <label className="text-xs text-slate-500">
@@ -143,8 +144,8 @@ export default async function PlantillaPage() {
                       ))}
                     </div>
                     <button className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50">Guardar</button>
-                  </form>
-                  <form action={eliminarPuestoAction}>
+                  </FormAccion>
+                  <FormAccion action={eliminarPuestoAction} exito="Puesto eliminado.">
                     <input type="hidden" name="id" value={p.id} />
                     <BotonConfirmar
                       className="pb-1 text-xs text-red-600 hover:underline"
@@ -153,12 +154,12 @@ export default async function PlantillaPage() {
                     >
                       Eliminar
                     </BotonConfirmar>
-                  </form>
+                  </FormAccion>
                 </div>
               );
             })}
 
-            <form action={guardarPuestoAction} className="flex flex-wrap items-end gap-2 rounded-lg border border-dashed border-slate-300 p-2">
+            <FormAccion action={guardarPuestoAction} exito="Puesto guardado." className="flex flex-wrap items-end gap-2 rounded-lg border border-dashed border-slate-300 p-2">
               <input type="hidden" name="areaId" value={a.id} />
               <label className="text-xs text-slate-500">
                 Nuevo puesto
@@ -171,12 +172,12 @@ export default async function PlantillaPage() {
               <input type="hidden" name="genero" value="" />
               <input type="hidden" name="rota" value="on" />
               <button className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700">Agregar puesto</button>
-            </form>
+            </FormAccion>
           </div>
         </div>
       ))}
 
-      <form action={guardarAreaAction} className="flex flex-wrap items-end gap-3 rounded-xl border border-dashed border-slate-300 bg-white p-5">
+      <FormAccion action={guardarAreaAction} exito="Área guardada." className="flex flex-wrap items-end gap-3 rounded-xl border border-dashed border-slate-300 bg-white p-5">
         <label className="text-xs text-slate-500">
           Nueva área
           <input name="nombre" required className={`${input} mt-1 block w-56`} />
@@ -186,7 +187,7 @@ export default async function PlantillaPage() {
           <input name="encargado" className={`${input} mt-1 block w-48`} />
         </label>
         <button className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">Agregar área</button>
-      </form>
+      </FormAccion>
     </div>
   );
 }

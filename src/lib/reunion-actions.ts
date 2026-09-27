@@ -8,6 +8,7 @@ import { firmaValida } from "@/lib/reunion";
 import { getCurrentUser } from "@/lib/auth";
 import { registrarAuditoria } from "@/lib/audit";
 import { proximoLunes } from "@/lib/logica";
+import { abrirSemana } from "@/lib/convocatoria";
 import type { ActionState } from "@/lib/actions";
 
 const siNo = (v: FormDataEntryValue | null) => (v === "si" ? true : v === "no" ? false : null);
@@ -71,26 +72,8 @@ export async function abrirSemanaEnReunionAction(formData: FormData) {
   const equipoId = String(formData.get("equipo") ?? "");
 
   const fechaLunes = proximoLunes();
-  const semana = await prisma.semanaServicio.upsert({
-    where: { fechaLunes },
-    update: { abierta: true },
-    create: { fechaLunes, creadaPorId: user.id },
-  });
-  const [voluntarios, existentes] = await Promise.all([
-    prisma.voluntario.findMany({ where: { activo: true }, select: { id: true } }),
-    prisma.respuesta.findMany({ where: { semanaId: semana.id }, select: { voluntarioId: true } }),
-  ]);
-  const ya = new Set(existentes.map((e) => e.voluntarioId));
-  const nuevos = voluntarios.filter((v) => !ya.has(v.id));
-  if (nuevos.length) {
-    await prisma.respuesta.createMany({
-      data: nuevos.map((v) => ({
-        semanaId: semana.id,
-        voluntarioId: v.id,
-        token: randomBytes(24).toString("hex"),
-      })),
-    });
-  }
+  const { semana } = await abrirSemana(fechaLunes, user.id);
+  if (!semana.abierta) await prisma.semanaServicio.update({ where: { id: semana.id }, data: { abierta: true } });
   await registrarAuditoria(user, "convocatoria.abrir_reunion", fechaLunes.toISOString().slice(0, 10));
   revalidatePath("/convocatorias");
   redirect(`/convocatorias/en-vivo${equipoId ? `?equipo=${encodeURIComponent(equipoId)}` : ""}`);

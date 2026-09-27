@@ -10,7 +10,13 @@ import {
 } from "@/lib/queries";
 import { FRANJAS, esAdmin, etiquetaRol, puedeConvocar, veTodo } from "@/lib/constants";
 import { crearConvocatoriaAction } from "@/lib/actions";
+import { Suspense } from "react";
 import ResumenPastoral from "./ResumenPastoral";
+import Cumpleanos from "./_panel/Cumpleanos";
+import AlertasPastorales from "./_panel/AlertasPastorales";
+import PendientesEquipo from "./_panel/PendientesEquipo";
+
+const Esqueleto = ({ alto }: { alto: string }) => <div className={`${alto} animate-pulse rounded-xl bg-slate-200/70`} />;
 
 function formatFecha(d: Date) {
   return new Intl.DateTimeFormat("es-CL", {
@@ -99,6 +105,12 @@ export default async function DashboardPage() {
         </Link>
       )}
 
+      {!veTodo(user.rol) && (
+        <Suspense fallback={<Esqueleto alto="h-32" />}>
+          <PendientesEquipo equipoIds={user.equipoIds} />
+        </Suspense>
+      )}
+
       <div className={`grid grid-cols-1 gap-4 ${stats.length === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
         {stats.map(({ n, t, icono: Icono, color }) => (
           <div
@@ -185,7 +197,22 @@ export default async function DashboardPage() {
         )}
       </div>
 
-      {user.rol === "PASTOR_CAMPUS" || user.rol === "ADMIN" ? <ResumenPastoral equipos={equipos} /> : null}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Suspense fallback={<Esqueleto alto="h-64" />}>
+          <Cumpleanos alcance={veTodo(user.rol) ? null : user.equipoIds} />
+        </Suspense>
+        <div className="lg:col-span-2">
+          <Suspense fallback={<Esqueleto alto="h-64" />}>
+            <AlertasPastorales alcance={veTodo(user.rol) ? null : user.equipoIds} />
+          </Suspense>
+        </div>
+      </div>
+
+      {user.rol === "PASTOR_CAMPUS" || user.rol === "ADMIN" ? (
+        <Suspense fallback={<Esqueleto alto="h-96" />}>
+          <ResumenPastoral equipos={equipos} />
+        </Suspense>
+      ) : null}
     </div>
   );
 }

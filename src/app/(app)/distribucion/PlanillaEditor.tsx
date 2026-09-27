@@ -3,12 +3,14 @@
 import { useMemo, useState, useTransition } from "react";
 import { Lock, Pencil, Plus, X } from "lucide-react";
 import { asignarManualAction, guardarEncargadoAction } from "@/lib/distribucion-actions";
+import { toast } from "@/components/toast";
 
 export type SlotVM = {
   slot: number;
   voluntarioId: string | null;
   nombre: string | null;
   fija: boolean;
+  llego: boolean;
   motivos: string[];
 };
 export type PuestoVM = {
@@ -53,6 +55,7 @@ function EncargadoInline({
       <form
         action={async (fd) => {
           await guardarEncargadoAction(fd);
+          toast("Encargado actualizado.");
           setEditando(false);
         }}
         className="flex flex-wrap items-center gap-2"
@@ -132,6 +135,7 @@ export default function PlanillaEditor({
       const r = await asignarManualAction(fd);
       if (r?.error) setError(r.error);
       else {
+        toast(r?.ok ?? "Listo.");
         setAbierto(null);
         setQ("");
       }
@@ -191,6 +195,11 @@ export default function PlanillaEditor({
                           }`}
                         >
                           {s.fija && <Lock className="h-3 w-3 text-slate-500" />}
+                          {s.llego && (
+                            <span title="Llegó" className="rounded-full bg-sage-600 px-1 text-[10px] font-bold leading-4 text-white">
+                              ✓
+                            </span>
+                          )}
                           {s.nombre}
                         </button>
                       ) : p.editable ? (
