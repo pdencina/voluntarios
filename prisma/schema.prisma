@@ -1,0 +1,251 @@
+// Prisma schema — Sistema de Administración de Voluntarios CPA
+// Los campos "tipo" y "rol" son String y se validan en la app (src/lib/constants.ts).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Equipo {
+  id            String   @id @default(cuid())
+  nombre        String   @unique
+  tipo          String // "MINISTERIO" | "ROTATIVO"
+  liderNombre   String?
+  liderContacto String?
+  createdAt     DateTime @default(now())
+
+  voluntarios           VoluntarioEquipo[]
+  usuarios              UsuarioEquipo[]
+  postulacionesInteres  Postulacion[]      @relation("PostulacionInteres")
+  postulacionesAsignado Postulacion[]      @relation("PostulacionAsignado")
+  areaServicios         AreaServicio[]
+  puestoServicios       PuestoServicio[]
+}
+
+model Voluntario {
+  id                 String    @id @default(cuid())
+  nombre             String
+  nombreNormalizado  String // trim + minúsculas + sin tildes, para deduplicar al importar
+  fechaNacimiento    DateTime?
+  genero             String? // "F" | "M" (para puestos por género)
+  fechaNacimientoRaw String? // valor original cuando no se pudo interpretar como fecha
+  telefono           String?
+  correo             String?
+  observaciones      String?
+  activo             Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+
+  equipos       VoluntarioEquipo[]
+  respuestas    Respuesta[]
+  postulaciones Postulacion[]
+  asignaciones  AsignacionPuesto[]
+
+  @@index([nombreNormalizado])
+}
+
+model VoluntarioEquipo {
+  voluntarioId String
+  equipoId     String
+
+  voluntario Voluntario @relation(fields: [voluntarioId], references: [id], onDelete: Cascade)
+  equipo     Equipo     @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+
+  @@id([voluntarioId, equipoId])
+}
+
+model Usuario {
+  id                  String    @id @default(cuid())
+  nombre              String
+  email               String    @unique
+  passwordHash        String
+  rol                 String // "ADMIN" | "LIDER"
+  sesionVersion       Int       @default(0) // se incrementa al cambiar la clave: cierra otras sesiones
+  debeCambiarPassword Boolean   @default(false)
+  expiraEn            DateTime? // cuentas temporales (demo)
+  createdAt           DateTime  @default(now())
+
+  equipos        UsuarioEquipo[]
+  semanasCreadas SemanaServicio[]
+  postulaciones  Postulacion[]
+}
+
+model UsuarioEquipo {
+  usuarioId String
+  equipoId  String
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  equipo  Equipo  @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+
+  @@id([usuarioId, equipoId])
+}
+
+model SemanaServicio {
+  id                    String   @id @default(cuid())
+  fechaLunes            DateTime @unique // lunes de la semana que se está convocando
+  abierta               Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  creadaPorId           String?
+  pastores              String?
+  administradoresCampus String?
+  lideresVoluntarios    String?
+
+  creadaPor    Usuario?           @relation(fields: [creadaPorId], references: [id], onDelete: SetNull)
+  respuestas   Respuesta[]
+  asignaciones AsignacionPuesto[]
+  encargados   EncargadoArea[]
+}
+
+model Respuesta {
+  id                  String    @id @default(cuid())
+  semanaId            String
+  voluntarioId        String
+  token               String    @unique
+  disponibleJueves    Boolean?
+  disponibleDomingoAM Boolean?
+  disponibleDomingoPM Boolean?
+  respondidoAt        DateTime?
+  createdAt           DateTime  @default(now())
+
+  semana     SemanaServicio @relation(fields: [semanaId], references: [id], onDelete: Cascade)
+  voluntario Voluntario     @relation(fields: [voluntarioId], references: [id], onDelete: Cascade)
+
+  @@unique([semanaId, voluntarioId])
+}
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  usuarioId     String?
+  usuarioNombre String
+  accion        String
+  detalle       String
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model LoginIntento {
+  id        String   @id @default(cuid())
+  clave     String // email en minúsculas
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([clave, createdAt])
+  @@index([ip, createdAt])
+}
+
+model Postulacion {
+  id               String    @id @default(cuid())
+  nombre           String
+  telefono         String?
+  correo           String?
+  fechaNacimiento  DateTime?
+  tiempoIglesia    String // MENOS_6M | DE_6M_A_1A | DE_1_A_3A | MAS_3A
+  equipoInteresId  String?
+  recomendadoPor   String?
+  observaciones    String?
+  estado           String    @default("PENDIENTE") // PENDIENTE | ACEPTADA | AUN_NO | INTEGRADA
+  decisionObs      String?
+  decididaPorId    String?
+  decididaAt       DateTime?
+  creadaPorId      String?
+  voluntarioId     String?
+  equipoAsignadoId String?
+  integradaAt      DateTime?
+  liderAvisadoAt   DateTime?
+  bienvenidaAt     DateTime?
+  bienvenidaPorId  String?
+  createdAt        DateTime  @default(now())
+
+  equipoInteres  Equipo?     @relation("PostulacionInteres", fields: [equipoInteresId], references: [id], onDelete: SetNull)
+  equipoAsignado Equipo?     @relation("PostulacionAsignado", fields: [equipoAsignadoId], references: [id], onDelete: SetNull)
+  creadaPor      Usuario?    @relation(fields: [creadaPorId], references: [id], onDelete: SetNull)
+  voluntario     Voluntario? @relation(fields: [voluntarioId], references: [id], onDelete: SetNull)
+
+  @@index([estado])
+}
+
+model PersonaNueva {
+  id            String    @id @default(cuid())
+  nombre        String
+  telefono      String?
+  campus        String    @default("CPA")
+  fechaLlegada  DateTime // solo fecha (UTC medianoche)
+  encuentro     String // JUEVES | DOMINGO_AM | DOMINGO_PM
+  categoria     String // HOMBRE | MUJER | JOVEN | NINO
+  origen        String // RRSS | AMIGOS_FAMILIA | OTRO
+  estado        String    @default("NUEVA") // NUEVA | CONTACTADA | PASO_1 | PASO_2
+  contactadaAt  DateTime?
+  paso1At       DateTime?
+  paso2At       DateTime?
+  atendidaPor   String?
+  observaciones String?
+  creadaPorId   String?
+  createdAt     DateTime  @default(now())
+
+  @@index([fechaLlegada])
+  @@index([estado])
+}
+
+model AreaServicio {
+  id        String  @id @default(cuid())
+  nombre    String
+  orden     Int     @default(0)
+  encargado String?
+  equipoId  String? // equipo cuyos voluntarios sirven en esta área
+  general   Boolean @default(false) // se llena con voluntarios de los equipos rotativos
+
+  equipo           Equipo?          @relation(fields: [equipoId], references: [id], onDelete: SetNull)
+  puestos          PuestoServicio[]
+  encargadosSemana EncargadoArea[]
+}
+
+model PuestoServicio {
+  id         String  @id @default(cuid())
+  areaId     String
+  nombre     String
+  orden      Int     @default(0)
+  cupos      Int     @default(1)
+  rota       Boolean @default(true) // false = conviene que sea la misma persona todos los encuentros
+  genero     String? // "F" | "M": solo voluntarios de ese género
+  encuentros String  @default("JUEVES,DOMINGO_AM,DOMINGO_PM")
+  equipoId   String? // sobrescribe el equipo del área
+
+  area         AreaServicio       @relation(fields: [areaId], references: [id], onDelete: Cascade)
+  equipo       Equipo?            @relation(fields: [equipoId], references: [id], onDelete: SetNull)
+  asignaciones AsignacionPuesto[]
+}
+
+model AsignacionPuesto {
+  id           String   @id @default(cuid())
+  semanaId     String
+  encuentro    String // JUEVES | DOMINGO_AM | DOMINGO_PM
+  puestoId     String
+  slot         Int
+  voluntarioId String
+  fija         Boolean  @default(false) // puesta a mano: la propuesta automática no la cambia
+  createdAt    DateTime @default(now())
+
+  semana     SemanaServicio @relation(fields: [semanaId], references: [id], onDelete: Cascade)
+  puesto     PuestoServicio @relation(fields: [puestoId], references: [id], onDelete: Cascade)
+  voluntario Voluntario     @relation(fields: [voluntarioId], references: [id], onDelete: Cascade)
+
+  @@unique([semanaId, encuentro, puestoId, slot])
+  @@unique([semanaId, encuentro, voluntarioId])
+}
+
+model EncargadoArea {
+  id        String @id @default(cuid())
+  semanaId  String
+  encuentro String
+  areaId    String
+  texto     String
+
+  semana SemanaServicio @relation(fields: [semanaId], references: [id], onDelete: Cascade)
+  area   AreaServicio   @relation(fields: [areaId], references: [id], onDelete: Cascade)
+
+  @@unique([semanaId, encuentro, areaId])
+}

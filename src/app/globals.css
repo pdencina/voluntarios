@@ -1,26 +1,54 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Marca: carbón y crema cálidos (identidad ARM Global) */
+  --color-brand-50: #fff9f4;
+  --color-brand-100: #f7efe8;
+  --color-brand-200: #e8e0d8;
+  --color-brand-300: #cbbfb4;
+  --color-brand-400: #a39a91;
+  --color-brand-500: #7d766f;
+  --color-brand-600: #31302e;
+  --color-brand-700: #1d1d1b;
+  --color-brand-800: #171716;
+  --color-brand-900: #121211;
+  --color-brand-950: #0b0b0a;
+
+  /* Acento durazno / terracota suave */
+  --color-accent-200: #f5d9d0;
+  --color-accent-300: #ebb6a7;
+  --color-accent-400: #dc9c89;
+  --color-accent-500: #c9806b;
+
+  /* Verde salvia (éxito / positivo) */
+  --color-sage-500: #428d73;
+  --color-sage-600: #37795f;
+  --color-sage-700: #2c6450;
+
+  /* Grises neutros cálidos: reemplazan los grises fríos de Tailwind */
+  --color-slate-50: #fbf7f3;
+  --color-slate-100: #f3ede7;
+  --color-slate-200: #e6ded6;
+  --color-slate-300: #d3c9bf;
+  --color-slate-400: #a8a099;
+  --color-slate-500: #7a746e;
+  --color-slate-600: #5c5752;
+  --color-slate-700: #45413d;
+  --color-slate-800: #31302e;
+  --color-slate-900: #1d1d1b;
+  --color-slate-950: #121211;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  background: #fff9f4;
+  color: #1d1d1b;
+}
+
+::selection {
+  background: #ebb6a7;
+  color: #1d1d1b;
 }

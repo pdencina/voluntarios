@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Voluntarios CPA
 
-## Getting Started
+Sistema de administración del voluntariado del Campus Puente Alto: equipos, voluntarios,
+convocatoria semanal (Jueves 8 PM, Domingo 11 AM y 6 PM), distribución de puestos,
+ingreso de nuevos voluntarios y registro de personas nuevas del equipo de Conexión.
 
-First, run the development server:
+Producción: https://sistema-voluntario.vercel.app
+
+## Tecnología
+
+- Next.js 16 (App Router, Server Actions) + TypeScript + Tailwind CSS 4
+- Prisma 7 con PostgreSQL en Neon (adaptador `@prisma/adapter-pg`)
+- Vercel (hosting, Cron semanal de respaldo, Blob privado para respaldos)
+- Vitest para la lógica (reglas de permisos, distribución, reportes, límites de acceso)
+
+## Variables de entorno
+
+Se descargan con `npx vercel env pull .env.local`.
+
+| Variable | Uso |
+|---|---|
+| `DATABASE_URL` | Conexión a Postgres (con pooler) usada por la app |
+| `DATABASE_URL_UNPOOLED` | Conexión directa usada por las migraciones |
+| `SESSION_SECRET` | Firma de las sesiones y de los links de reunión |
+| `BLOB_READ_WRITE_TOKEN` | Almacén privado de respaldos |
+| `CRON_SECRET` | Protege el respaldo automático semanal |
+
+## Desarrollo
 
 ```bash
+npm install
+npx vercel env pull .env.local
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Comandos útiles:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm test                     # pruebas
+npx tsc --noEmit             # tipos
+npx eslint .                 # estilo
+npx prisma migrate dev       # nueva migración (requiere conexión directa a Postgres)
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Las migraciones se aplican solas al desplegar (`npm run build` ejecuta `prisma migrate deploy`).
 
-## Learn More
+## Datos
 
-To learn more about Next.js, take a look at the following resources:
+Los datos personales **no** se guardan en este repositorio. Para una base nueva:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npx tsx scripts/parse-excel.ts "ruta/al/Organigrama.xlsx"   # genera prisma/seed-data.json (ignorado por git)
+npx tsx scripts/seed-http.ts                                 # carga equipos, voluntarios y el admin
+npx tsx scripts/plantilla-distribucion.ts                    # áreas y puestos de la planilla
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Datos de demostración: `npx tsx scripts/demo.ts crear` y `npx tsx scripts/demo.ts limpiar`.
+Las cuentas demo vencen solas (campo `expiraEn`).
 
-## Deploy on Vercel
+## Roles
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Rol | Alcance |
+|---|---|
+| Administrador / Pastor de campus | Todo, incluido usuarios, respaldos y auditoría |
+| Administrador de campus | Sus equipos, convocatorias, distribución e ingreso de voluntarios |
+| Líder de equipo | Sus equipos; los líderes de equipos rotativos arman la distribución completa |
